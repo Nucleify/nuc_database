@@ -9,7 +9,7 @@ class SeederDiscoveryService
 {
     private const MODULES_PATH = 'modules';
 
-    public function discoverAndCallSeeders(Seeder $seeder): void
+    public function discoverAndCallSeeders(Seeder $seeder, array $excludedSeeders = []): void
     {
         $modulePath = base_path(self::MODULES_PATH);
 
@@ -20,7 +20,7 @@ class SeederDiscoveryService
         $modules = $this->getModuleDirectories($modulePath);
 
         foreach ($modules as $module) {
-            $this->callModuleSeeder($seeder, $module);
+            $this->callModuleSeeder($seeder, $module, $excludedSeeders);
         }
     }
 
@@ -49,7 +49,7 @@ class SeederDiscoveryService
         return $modules;
     }
 
-    private function callModuleSeeder(Seeder $seeder, string $module): void
+    private function callModuleSeeder(Seeder $seeder, string $module, array $excludedSeeders = []): void
     {
         $configPath = base_path(self::MODULES_PATH . "/{$module}/config.json");
 
@@ -68,6 +68,10 @@ class SeederDiscoveryService
         }
 
         $seederName = $config['seeder'] ?? $this->guessSeederName($module);
+
+        if ($this->isSeederExcluded($seederName, $excludedSeeders)) {
+            return;
+        }
 
         if (class_exists("Database\\Seeders\\{$seederName}")) {
             $seederClass = "Database\\Seeders\\{$seederName}";
@@ -110,5 +114,13 @@ class SeederDiscoveryService
             $seeder->showMessage("{$moduleName} seeding completed.", $command);
         } catch (\ReflectionException $e) {
         }
+    }
+
+    private function isSeederExcluded(string $seederName, array $excludedSeeders): bool
+    {
+        $fqcn = "Database\\Seeders\\{$seederName}";
+
+        return in_array($seederName, $excludedSeeders, true)
+            || in_array($fqcn, $excludedSeeders, true);
     }
 }
