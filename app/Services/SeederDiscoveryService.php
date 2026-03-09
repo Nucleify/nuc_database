@@ -8,11 +8,11 @@ class SeederDiscoveryService
 {
     public function discoverAndCallSeeders(Seeder $seeder, array $excludedSeeders = []): void
     {
-        if (!is_dir(module_path())) {
+        if (!is_dir(modules_path())) {
             return;
         }
 
-        $modules = $this->getModuleDirectories(module_path());
+        $modules = $this->getModuleDirectories(modules_path());
 
         foreach ($modules as $module) {
             $this->callModuleSeeder($seeder, $module, $excludedSeeders);
