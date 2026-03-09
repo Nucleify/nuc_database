@@ -3,21 +3,16 @@
 namespace App\Services;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\File;
 
 class SeederDiscoveryService
 {
-    private const MODULES_PATH = 'modules';
-
     public function discoverAndCallSeeders(Seeder $seeder, array $excludedSeeders = []): void
     {
-        $modulePath = base_path(self::MODULES_PATH);
-
-        if (!File::exists($modulePath)) {
+        if (!is_dir(module_path())) {
             return;
         }
 
-        $modules = $this->getModuleDirectories($modulePath);
+        $modules = $this->getModuleDirectories(module_path());
 
         foreach ($modules as $module) {
             $this->callModuleSeeder($seeder, $module, $excludedSeeders);
@@ -51,13 +46,11 @@ class SeederDiscoveryService
 
     private function callModuleSeeder(Seeder $seeder, string $module, array $excludedSeeders = []): void
     {
-        $configPath = base_path(self::MODULES_PATH . "/{$module}/config.json");
+        $config = module_config($module);
 
-        if (!File::exists($configPath)) {
+        if (empty($config)) {
             return;
         }
-
-        $config = json_decode(File::get($configPath), true);
 
         if (!$this->shouldRunSeeder($config)) {
             return;
